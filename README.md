@@ -33,7 +33,7 @@ By the end, this repo serves as a **living micro-project library** that anyone c
 
 | # | Concept | 🟢 Easy | 🔴 Advanced |
 |---|---------|---------|------------|
-| 1 | Face Mesh | 🔜 Coming Soon | [Astral Drift](./ml5_kit_p1.js) |
+| 1 | Face Mesh | 🔜 Coming Soon | [Astral Drift](./Facemesh/ml5_kit_p1.js) |
 | 2 | Image Classification | 🔜 Coming Soon | 🔜 Coming Soon |
 | 3 | Pose Estimation | 🔜 Coming Soon | 🔜 Coming Soon |
 | 4 | Object Detection | 🔜 Coming Soon | 🔜 Coming Soon |

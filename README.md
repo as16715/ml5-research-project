@@ -33,16 +33,16 @@ By the end, this repo serves as a **living micro-project library** that anyone c
 
 | # | Concept | 🟢 Easy | 🔴 Advanced |
 |---|---------|---------|------------|
-| 1 | Face Mesh | 🔜 Coming Soon | [Astral Drift](./Facemesh/ml5_kit_p1.js) |
-| 2 | Image Classification | 🔜 Coming Soon | 🔜 Coming Soon |
-| 3 | Pose Estimation | 🔜 Coming Soon | 🔜 Coming Soon |
-| 4 | Object Detection | 🔜 Coming Soon | 🔜 Coming Soon |
-| 5 | Sound Classification | 🔜 Coming Soon | 🔜 Coming Soon |
-| 6 | Hand Pose | 🔜 Coming Soon | 🔜 Coming Soon |
-| 7 | Body Segmentation | 🔜 Coming Soon | 🔜 Coming Soon |
-| 8 | Sentiment Analysis | 🔜 Coming Soon | 🔜 Coming Soon |
+| 1 | Face Mesh | [Easy](./Facemesh/Easy) | [Advanced](./Facemesh/Advanced) |
+| 2 | Image Classification | [Easy](./ImageClassification) | 🔜 Coming Soon |
+| 3 | Pose Estimation | [Easy](./PoseEstimation) | 🔜 Coming Soon |
+| 4 | Object Detection | [Easy](./ObjectDetection) | 🔜 Coming Soon |
+| 5 | Sound Classification | [Easy](./SoundClassification) | 🔜 Coming Soon |
+| 6 | Hand Pose | [Easy](./HandPose) | 🔜 Coming Soon |
+| 7 | Body Segmentation | [Easy](./BodySegmentation) | 🔜 Coming Soon |
+| 8 | Sentiment Analysis | [Easy](./SentimentAnalysis) | 🔜 Coming Soon |
 | 9 | Neural Network | 🔜 Coming Soon | 🔜 Coming Soon |
-| 10 | Feature Extractor | 🔜 Coming Soon | 🔜 Coming Soon |
+| 10 | Feature Extractor | [Easy](./FeatureExtractor) | 🔜 Coming Soon |
 
 ---
 

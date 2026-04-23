@@ -72,6 +72,50 @@
       filter: brightness(1.02);
     }
 
+    details {
+      margin: 0;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: none;
+      color: var(--link);
+      background: var(--linkBg);
+      border: 1px solid #d6e2f7;
+      border-radius: 12px;
+      padding: 12px;
+      display: block;
+      font-weight: 700;
+    }
+
+    summary:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::marker {
+      content: "";
+    }
+
+    .subbuttons {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px 12px;
+    }
+
+    .subbuttons a {
+      display: inline-block;
+      width: auto;
+      padding: 8px 10px;
+      font-weight: 700;
+    }
+
     .small {
       margin-top: 14px;
       font-size: 0.92rem;
@@ -85,7 +129,15 @@
     <p>Open any mini-project from this single page.</p>
 
     <ul>
-      <li><a href="./Facemesh/index.html">Face Mesh - Astral Drift</a></li>
+      <li>
+        <details>
+          <summary>Face Mesh</summary>
+          <div class="subbuttons">
+            <a href="./Facemesh/Easy/index.html">Easy</a>
+            <a href="./Facemesh/Advanced/index.html">Advanced</a>
+          </div>
+        </details>
+      </li>
       <li><a href="./ImageClassification/index.html">Image Classification - Label Reactor</a></li>
       <li><a href="./PoseEstimation/index.html">Pose Estimation - Joint Radar</a></li>
       <li><a href="./ObjectDetection/index.html">Object Detection - Biggest Box</a></li>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML5 Research Project - Demo Hub</title>
+  <style>
+    :root {
+      --bg1: #f6eedf;
+      --bg2: #deebff;
+      --ink: #1f2f4c;
+      --sub: #4d5e7e;
+      --card: rgba(255, 255, 255, 0.74);
+      --line: #d3deef;
+      --link: #23406f;
+      --linkBg: #edf3ff;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(130deg, var(--bg1), var(--bg2));
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    main {
+      width: min(900px, 100%);
+      background: var(--card);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 18px 42px rgba(16, 24, 50, 0.16);
+      border: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+    }
+
+    p {
+      margin: 8px 0 18px;
+      color: var(--sub);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    a {
+      text-decoration: none;
+      color: var(--link);
+      background: var(--linkBg);
+      border: 1px solid #d6e2f7;
+      border-radius: 12px;
+      padding: 12px;
+      display: block;
+      font-weight: 700;
+    }
+
+    a:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    .small {
+      margin-top: 14px;
+      font-size: 0.92rem;
+      color: var(--sub);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ML5 Demo Hub</h1>
+    <p>Open any mini-project from this single page.</p>
+
+    <ul>
+      <li><a href="./Facemesh/index.html">Face Mesh - Astral Drift</a></li>
+      <li><a href="./ImageClassification/index.html">Image Classification - Label Reactor</a></li>
+      <li><a href="./PoseEstimation/index.html">Pose Estimation - Joint Radar</a></li>
+      <li><a href="./ObjectDetection/index.html">Object Detection - Biggest Box</a></li>
+      <li><a href="./SoundClassification/index.html">Sound Classification - Sound Color</a></li>
+      <li><a href="./HandPose/index.html">Hand Pose - Fingertip Trail</a></li>
+      <li><a href="./BodySegmentation/index.html">Body Segmentation - Person Aura</a></li>
+      <li><a href="./SentimentAnalysis/index.html">Sentiment Analysis - Mood Meter</a></li>
+      <li><a href="./FeatureExtractor/index.html">Feature Extractor - Two-Class Trainer</a></li>
+    </ul>
+
+    <p class="small">Tip: For camera and microphone demos, use localhost instead of opening files directly.</p>
+  </main>
+</body>
+</html>

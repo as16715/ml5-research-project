@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Body Segmentation - Easy Person Aura</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(130deg, #fce8dd, #ddefff);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(92vw, 760px);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.2rem, 2.7vw, 1.9rem);
+      color: #2a3152;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #4a5475;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(18, 24, 45, 0.16);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy Body Segmentation: Person Aura</h1>
+    <p>Your body gets an animated color aura from the segmentation mask while the background stays natural.</p>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    let video;
+    let segmenter;
+    let segmentation;
+    let modelReady = false;
+    let detectStarted = false;
+    let statusText = "Loading segmentation model...";
+    let setupTime = 0;
+
+    function setup() {
+      const canvas = createCanvas(512, 384);
+      canvas.parent(document.querySelector("main"));
+      setupTime = millis();
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      segmenter = ml5.bodySegmentation("SelfieSegmentation", {
+        runtime: "tfjs",
+        modelType: "general",
+        maskType: "person",
+        flipped: true
+      }, () => {
+        modelReady = true;
+        statusText = "Model ready. Starting mask detection...";
+        startDetectionIfReady();
+      });
+
+      video.elt.onloadeddata = () => {
+        startDetectionIfReady();
+      };
+
+      setTimeout(() => {
+        if (!modelReady) {
+          statusText = "Model still loading. Check network and reload.";
+        }
+      }, 15000);
+
+
+      textFont("Trebuchet MS");
+    }
+
+    function startDetectionIfReady() {
+      if (detectStarted || !modelReady || !video || video.width === 0) {
+        return;
+      }
+
+      detectStarted = true;
+      segmenter.detectStart(video, (result, error) => {
+        if (error) {
+          statusText = "Segmentation error. Reload and allow camera access.";
+          return;
+        }
+        segmentation = result;
+      });
+    }
+
+
+    function draw() {
+      image(video, 0, 0, width, height);
+
+      if (!segmentation || !segmentation.mask) {
+        fill(0, 120);
+        rect(0, 0, width, height);
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(18);
+
+        if (!window.isSecureContext) {
+          statusText = "Camera models need https or localhost.";
+        } else if (millis() - setupTime > 12000 && detectStarted) {
+          statusText = "Mask is slow to initialize. Keep camera visible and wait.";
+        }
+
+        text(statusText, width / 2, height / 2);
+        return;
+      }
+
+      const auraR = 140 + 80 * sin(frameCount * 0.03);
+      const auraG = 80 + 90 * sin(frameCount * 0.05 + 0.5);
+      const auraB = 220 + 30 * sin(frameCount * 0.04 + 1.2);
+
+      tint(auraR, auraG, auraB, 155);
+      image(segmentation.mask, 0, 0, width, height);
+      noTint();
+
+      fill(0, 140);
+      noStroke();
+      rect(0, height - 62, width, 62);
+      fill(255);
+      textAlign(LEFT, CENTER);
+      textSize(16);
+      text("Person mask overlay active", 14, height - 32);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Classification - Easy Label Reactor</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #f8eecf, #dde9ff);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(92vw, 700px);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.2rem, 2.7vw, 1.8rem);
+      color: #1f2745;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #394266;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 14px;
+      box-shadow: 0 18px 45px rgba(15, 25, 55, 0.18);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy Image Classification: Label Reactor</h1>
+    <p>Show an object to your camera and watch the color and label react to the model prediction.</p>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    let video;
+    let classifier;
+    let label = "loading model...";
+    let confidence = 0;
+
+    const palettes = {
+      person: [40, 102, 180],
+      cat: [150, 77, 200],
+      dog: [75, 140, 90],
+      bottle: [50, 145, 180],
+      banana: [230, 190, 55],
+      cup: [180, 90, 70],
+      keyboard: [85, 85, 105],
+      book: [160, 95, 65]
+    };
+
+    const tags = {
+      person: "PERSON",
+      cat: "CAT",
+      dog: "DOG",
+      bottle: "BOTTLE",
+      banana: "BANANA",
+      cup: "CUP",
+      keyboard: "KEYBOARD",
+      book: "BOOK"
+    };
+
+    function preload() {
+      classifier = ml5.imageClassifier("MobileNet");
+    }
+
+    function setup() {
+      const canvas = createCanvas(640, 480);
+      canvas.parent(document.querySelector("main"));
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      textAlign(CENTER, CENTER);
+      textFont("Trebuchet MS");
+
+      classifyVideo();
+    }
+
+    function classifyVideo() {
+      classifier.classify(video, gotResult);
+    }
+
+    function gotResult(results) {
+      if (results && results.length > 0) {
+        label = results[0].label;
+        confidence = results[0].confidence;
+      }
+      classifyVideo();
+    }
+
+    function pickByLabel(source, fallback) {
+      const lower = label.toLowerCase();
+      for (const key in source) {
+        if (lower.includes(key)) {
+          return source[key];
+        }
+      }
+      return fallback;
+    }
+
+    function draw() {
+      const bgColor = pickByLabel(palettes, [25, 30, 45]);
+      background(bgColor[0], bgColor[1], bgColor[2]);
+
+      image(video, 0, 0, width, height);
+
+      fill(0, 145);
+      rect(0, height - 98, width, 98);
+
+      fill(255);
+      textSize(18);
+      text(pickByLabel(tags, "OBJECT"), 58, height - 48);
+
+      textSize(22);
+      text(`Label: ${label}`, width / 2 + 20, height - 62);
+
+      textSize(16);
+      text(`Confidence: ${(confidence * 100).toFixed(1)}%`, width / 2 + 20, height - 30);
+    }
+  </script>
+</body>
+</html>

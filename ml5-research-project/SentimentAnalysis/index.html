@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentiment Analysis - Easy Mood Meter</title>
+  <style>
+    :root {
+      --bg1: #f8edd8;
+      --bg2: #d8e9ff;
+      --ink: #21314f;
+      --sub: #405173;
+      --card: rgba(255, 255, 255, 0.72);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(130deg, var(--bg1), var(--bg2));
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+    }
+
+    main {
+      width: min(92vw, 760px);
+      text-align: center;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 18px 42px rgba(20, 30, 50, 0.14);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.2rem, 2.7vw, 1.9rem);
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: var(--sub);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border: 1px solid #cdd8ec;
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 12px;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: #203458;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .optionRow {
+      margin-top: 12px;
+      color: var(--sub);
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .source {
+      margin-top: 8px;
+      color: var(--sub);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .meter {
+      margin-top: 16px;
+      width: 100%;
+      height: 18px;
+      border-radius: 999px;
+      background: #e4e8f4;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #dd6f6f, #f0bd52, #76c287);
+      transition: width 200ms ease;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy Sentiment Analysis: Mood Meter</h1>
+    <p>Type any sentence and click Analyze to estimate how positive it sounds.</p>
+    <textarea id="textInput">Today I built a tiny ml project and it felt amazing.</textarea>
+    <button id="analyzeBtn">Analyze</button>
+    <div class="optionRow">
+      <input id="useCalibration" type="checkbox" />
+      <label for="useCalibration">Use bias correction (experimental)</label>
+    </div>
+    <div class="source" id="sourceText">Score source: loading...</div>
+    <div class="meter"><div class="fill" id="fillBar"></div></div>
+    <div class="result" id="resultText">Loading sentiment model...</div>
+  </main>
+
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    let sentiment;
+    let modelReady = false;
+    let modelLoading = true;
+    let modelFailed = false;
+
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const textInput = document.getElementById("textInput");
+    const fillBar = document.getElementById("fillBar");
+    const resultText = document.getElementById("resultText");
+    const useCalibration = document.getElementById("useCalibration");
+    const sourceText = document.getElementById("sourceText");
+
+    analyzeBtn.addEventListener("click", runAnalysis);
+
+    textInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        runAnalysis();
+      }
+    });
+
+    initSentimentModel();
+
+    setTimeout(() => {
+      if (modelLoading && !modelReady) {
+        modelLoading = false;
+        modelFailed = true;
+        resultText.textContent = "Model load timed out. Using fallback scoring.";
+        sourceText.textContent = "Score source: fallback keyword scorer";
+      }
+    }, 12000);
+
+    async function initSentimentModel() {
+      try {
+        const loaded = await Promise.resolve(ml5.sentiment("movieReviews"));
+        sentiment = loaded;
+        modelReady = true;
+        modelLoading = false;
+        resultText.textContent = "Model ready";
+        sourceText.textContent = "Score source: ml5 movieReviews model (raw)";
+      } catch (err) {
+        modelLoading = false;
+        modelFailed = true;
+        resultText.textContent = "Model failed to load. Using fallback scoring.";
+        sourceText.textContent = "Score source: fallback keyword scorer";
+      }
+    }
+
+    function fallbackScore(text) {
+      const positiveWords = ["good", "great", "love", "happy", "awesome", "amazing", "fun", "nice", "excellent", "joy", "excited"];
+      const negativeWords = ["bad", "sad", "hate", "awful", "terrible", "worse", "boring", "angry", "hard", "depressed", "lonely", "upset"];
+
+      const tokens = tokenize(text);
+      let score = 0;
+
+      for (const token of tokens) {
+        if (positiveWords.includes(token)) score += 1;
+        if (negativeWords.includes(token)) score -= 1;
+      }
+
+      if (tokens.length === 0) return 0.5;
+      const normalized = 0.5 + score / Math.max(tokens.length * 2, 6);
+      return Math.max(0, Math.min(1, normalized));
+    }
+
+    function tokenize(text) {
+      return text.toLowerCase().match(/[a-z']+/g) || [];
+    }
+
+    function lexicalShift(text) {
+      const tokens = tokenize(text);
+      const strongNegative = ["bad", "sad", "depressed", "terrible", "awful", "miserable", "hate", "crying", "lonely", "upset"];
+      const strongPositive = ["happy", "amazing", "awesome", "love", "great", "excited", "joyful", "wonderful"];
+
+      let shift = 0;
+      for (const token of tokens) {
+        if (strongNegative.includes(token)) shift -= 0.12;
+        if (strongPositive.includes(token)) shift += 0.12;
+      }
+
+      if (tokens.length <= 3 && shift !== 0) {
+        shift *= 1.25;
+      }
+
+      return Math.max(-0.3, Math.min(0.3, shift));
+    }
+
+    function phraseShift(text) {
+      const lower = text.toLowerCase();
+      let shift = 0;
+
+      const negativeStatePattern = /\b(i\s*am|i'm|im|i\s*feel|feeling|it\s*felt|it\s*feels|this\s*is|that\s*is)\s+(really\s+|very\s+|so\s+)?(bad|sad|awful|terrible|upset|depressed|miserable|horrible)\b/;
+      const positiveStatePattern = /\b(i\s*am|i'm|im|i\s*feel|feeling|it\s*felt|it\s*feels|this\s*is|that\s*is)\s+(really\s+|very\s+|so\s+)?(good|happy|great|amazing|awesome|wonderful|excellent)\b/;
+
+      if (negativeStatePattern.test(lower)) {
+        shift -= 0.34;
+      }
+      if (positiveStatePattern.test(lower)) {
+        shift += 0.26;
+      }
+
+      return Math.max(-0.4, Math.min(0.35, shift));
+    }
+
+    function calibrateModelScore(rawScore, text) {
+      // The movieReviews model is often optimistic on short phrases.
+      const baseline = 0.62;
+      const centered = 0.5 + (rawScore - baseline) * 1.35;
+      const lexAdjusted = centered + lexicalShift(text);
+      const phr = phraseShift(text);
+      let shifted = lexAdjusted + phr;
+
+      // If there is a clear negative self-state phrase, avoid falsely high positive output.
+      if (phr <= -0.25) {
+        shifted = Math.min(shifted, 0.45);
+      }
+
+      return Math.max(0, Math.min(1, shifted));
+    }
+
+    async function runAnalysis() {
+      if (modelLoading) {
+        resultText.textContent = "Model still loading... try again in a moment.";
+        sourceText.textContent = "Score source: loading model";
+        return;
+      }
+
+      const text = textInput.value.trim();
+      if (!text) {
+        resultText.textContent = "Type some text first";
+        sourceText.textContent = modelReady
+          ? "Score source: ml5 movieReviews model (raw)"
+          : "Score source: fallback keyword scorer";
+        fillBar.style.width = "0%";
+        return;
+      }
+
+      let rawScore;
+      let usedFallback = false;
+
+      if (modelReady && sentiment) {
+        try {
+          const prediction = await Promise.resolve(sentiment.predict(text));
+          rawScore = prediction && typeof prediction.confidence === "number"
+            ? prediction.confidence
+            : 0.5;
+          sourceText.textContent = useCalibration.checked
+            ? "Score source: ml5 model + optional correction"
+            : "Score source: ml5 movieReviews model (raw)";
+        } catch (err) {
+          rawScore = fallbackScore(text);
+          usedFallback = true;
+          sourceText.textContent = "Score source: fallback keyword scorer";
+        }
+      } else if (modelFailed) {
+        rawScore = fallbackScore(text);
+        usedFallback = true;
+        sourceText.textContent = "Score source: fallback keyword scorer";
+      } else {
+        resultText.textContent = "Model not ready yet";
+        sourceText.textContent = "Score source: loading model";
+        return;
+      }
+
+      const score = usedFallback
+        ? rawScore
+        : (useCalibration.checked ? calibrateModelScore(rawScore, text) : rawScore);
+      const percent = Math.round(score * 100);
+      fillBar.style.width = `${percent}%`;
+
+      let tone = "Neutral";
+      if (score > 0.58) {
+        tone = "Positive";
+      } else if (score < 0.42) {
+        tone = "Negative";
+      }
+
+      let suffix = ` - raw ${Math.round(rawScore * 100)}%`;
+      if (usedFallback) {
+        suffix = " - fallback mode";
+      } else if (useCalibration.checked) {
+        suffix = ` - corrected from raw ${Math.round(rawScore * 100)}%`;
+      }
+      resultText.textContent = `Sentiment score: ${percent}% (${tone})${suffix}`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pose Estimation - Easy Joint Radar</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #f0f8dc, #d8e7ff);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(92vw, 760px);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.2rem, 2.7vw, 1.9rem);
+      color: #20344f;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #405470;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(16, 24, 46, 0.16);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy Pose Estimation: Joint Radar</h1>
+    <p>Lift your wrists and watch circles grow by wrist height. Great for learning keypoints quickly.</p>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    let video;
+    let bodyPose;
+    let poses = [];
+
+    function preload() {
+      bodyPose = ml5.bodyPose("MoveNet", { flipped: true });
+    }
+
+    function setup() {
+      const canvas = createCanvas(640, 480);
+      canvas.parent(document.querySelector("main"));
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      bodyPose.detectStart(video, (results) => {
+        poses = results || [];
+      });
+
+      textFont("Trebuchet MS");
+    }
+
+    function draw() {
+      image(video, 0, 0, width, height);
+
+      if (poses.length === 0) {
+        overlayMessage("Step into frame to detect body pose");
+        return;
+      }
+
+      const pose = poses[0];
+      const leftWrist = pose.left_wrist;
+      const rightWrist = pose.right_wrist;
+
+      let leftRadius = 20;
+      let rightRadius = 20;
+
+      if (leftWrist && leftWrist.confidence > 0.2) {
+        leftRadius = map(height - leftWrist.y, 0, height, 20, 120);
+        noFill();
+        stroke(90, 220, 130);
+        strokeWeight(4);
+        circle(leftWrist.x, leftWrist.y, leftRadius);
+      }
+
+      if (rightWrist && rightWrist.confidence > 0.2) {
+        rightRadius = map(height - rightWrist.y, 0, height, 20, 120);
+        noFill();
+        stroke(230, 160, 80);
+        strokeWeight(4);
+        circle(rightWrist.x, rightWrist.y, rightRadius);
+      }
+
+      fill(0, 145);
+      noStroke();
+      rect(0, height - 88, width, 88);
+
+      fill(255);
+      textAlign(LEFT, CENTER);
+      textSize(16);
+      text(`Left wrist radius: ${leftRadius.toFixed(0)}`, 14, height - 56);
+      text(`Right wrist radius: ${rightRadius.toFixed(0)}`, 14, height - 30);
+    }
+
+    function overlayMessage(msg) {
+      fill(0, 140);
+      noStroke();
+      rect(0, 0, width, height);
+      fill(255);
+      textAlign(CENTER, CENTER);
+      textSize(22);
+      text(msg, width / 2, height / 2);
+    }
+  </script>
+</body>
+</html>

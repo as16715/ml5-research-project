@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hand Pose - Easy Fingertip Trail</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #ffeeda, #e2e6ff);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(92vw, 700px);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.2rem, 2.7vw, 1.8rem);
+      color: #223153;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #394a6b;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 14px;
+      box-shadow: 0 18px 45px rgba(14, 22, 48, 0.16);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy Hand Pose: Fingertip Trail</h1>
+    <p>Move your index finger to draw a glowing trail. Pinch thumb + index to switch color mode.</p>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    let video;
+    let handPose;
+    let hands = [];
+    let points = [];
+
+    function preload() {
+      handPose = ml5.handPose({
+        maxHands: 1,
+        flipped: true
+      });
+    }
+
+    function setup() {
+      const canvas = createCanvas(640, 480);
+      canvas.parent(document.querySelector("main"));
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      handPose.detectStart(video, (results) => {
+        hands = results || [];
+      });
+
+      textFont("Trebuchet MS");
+    }
+
+    function draw() {
+      image(video, 0, 0, width, height);
+
+      fill(10, 120);
+      noStroke();
+      rect(0, 0, width, height);
+
+      if (hands.length > 0 && hands[0].keypoints) {
+        const hand = hands[0];
+        const indexTip = hand.keypoints[8];
+        const thumbTip = hand.keypoints[4];
+
+        const pinchDistance = dist(indexTip.x, indexTip.y, thumbTip.x, thumbTip.y);
+        const isPinching = pinchDistance < 35;
+
+        points.push({
+          x: indexTip.x,
+          y: indexTip.y,
+          pinching: isPinching,
+          life: 255
+        });
+
+        noFill();
+        stroke(255, 240);
+        strokeWeight(2);
+        circle(indexTip.x, indexTip.y, 16);
+      }
+
+      for (let i = points.length - 1; i >= 0; i--) {
+        const p = points[i];
+        const base = p.pinching ? [255, 130, 100] : [110, 220, 255];
+
+        noStroke();
+        fill(base[0], base[1], base[2], p.life);
+        circle(p.x, p.y, 12);
+
+        p.life -= 4;
+        if (p.life <= 0) {
+          points.splice(i, 1);
+        }
+      }
+
+      fill(255);
+      textAlign(LEFT, TOP);
+      textSize(15);
+      text("Blue trail = open hand | Orange trail = pinch", 14, 14);
+      textSize(13);
+      text(`Trail points: ${points.length}`, 14, 36);
+    }
+  </script>
+</body>
+</html>

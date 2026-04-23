@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Face Mesh - Astral Drift</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #05050d;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    #hint {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 12px;
+      z-index: 20;
+      background: rgba(5, 8, 18, 0.5);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="hint">Press F to toggle face debug panel.</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script src="./ml5_kit_p1.js"></script>
+</body>
+</html>

@@ -12,3 +12,29 @@ html, body {
 canvas {
   display: block;
 }
+
+.topbar {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 20;
+}
+
+.nav-btn {
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(13, 18, 36, 0.75);
+  border: 1px solid rgba(150, 190, 255, 0.35);
+  color: rgba(230, 240, 255, 0.92);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.2px;
+}
+
+.nav-btn.secondary {
+  background: rgba(22, 30, 52, 0.8);
+}

@@ -52,10 +52,47 @@
       border-radius: 14px;
       box-shadow: 0 18px 45px rgba(16, 24, 48, 0.16);
     }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .nav-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(31, 48, 79, 0.2);
+      color: #1f304f;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .nav-btn.secondary {
+      background: rgba(228, 239, 255, 0.9);
+    }
   </style>
 </head>
 <body>
   <main>
+    <div class="topbar">
+      <a class="nav-btn" href="../index.html">Back to Hub</a>
+      <div class="nav-group">
+        <a class="nav-btn" href="https://docs.ml5js.org/#/reference/sound-classifier" target="_blank" rel="noreferrer">ml5 Docs</a>
+        <a class="nav-btn secondary" href="./README.md">Project README</a>
+      </div>
+    </div>
     <h1>Easy Sound Classification: Sound Color</h1>
     <p>Press the button to enable microphone, then make sounds and watch label + confidence react.</p>
     <button id="startBtn" disabled>Loading model...</button>

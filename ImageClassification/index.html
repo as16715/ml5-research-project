@@ -36,10 +36,47 @@
       border-radius: 14px;
       box-shadow: 0 18px 45px rgba(15, 25, 55, 0.18);
     }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .nav-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(31, 39, 69, 0.2);
+      color: #1f2745;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .nav-btn.secondary {
+      background: rgba(224, 235, 255, 0.85);
+    }
   </style>
 </head>
 <body>
   <main>
+    <div class="topbar">
+      <a class="nav-btn" href="../index.html">Back to Hub</a>
+      <div class="nav-group">
+        <a class="nav-btn" href="https://docs.ml5js.org/#/reference/image-classifier" target="_blank" rel="noreferrer">ml5 Docs</a>
+        <a class="nav-btn secondary" href="./README.md">Project README</a>
+      </div>
+    </div>
     <h1>Easy Image Classification: Label Reactor</h1>
     <p>Show an object to your camera and watch the color and label react to the model prediction.</p>
   </main>

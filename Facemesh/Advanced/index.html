@@ -25,9 +25,40 @@
       border-radius: 8px;
       padding: 6px 8px;
     }
+
+    .topbar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      z-index: 30;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(10, 14, 28, 0.75);
+      border: 1px solid rgba(148, 180, 255, 0.35);
+      color: rgba(230, 240, 255, 0.9);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.2px;
+    }
+
+    .nav-btn.secondary {
+      background: rgba(22, 30, 52, 0.8);
+    }
   </style>
 </head>
 <body>
+  <nav class="topbar">
+    <a class="nav-btn" href="../../index.html">Back to Hub</a>
+    <a class="nav-btn" href="https://docs.ml5js.org/#/reference/facemesh" target="_blank" rel="noreferrer">ml5 Docs</a>
+    <a class="nav-btn secondary" href="./README.md">Project README</a>
+  </nav>
   <div id="hint">Press F to toggle face debug panel.</div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
   <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>

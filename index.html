@@ -10,10 +10,11 @@
       --bg2: #deebff;
       --ink: #1f2f4c;
       --sub: #4d5e7e;
-      --card: rgba(255, 255, 255, 0.74);
+      --card: rgba(255, 255, 255, 0.78);
       --line: #d3deef;
       --link: #23406f;
       --linkBg: #edf3ff;
+      --accent: #f6b15b;
     }
 
     body {
@@ -29,10 +30,10 @@
     }
 
     main {
-      width: min(900px, 100%);
+      width: min(980px, 100%);
       background: var(--card);
       border-radius: 18px;
-      padding: 22px;
+      padding: 24px;
       box-shadow: 0 18px 42px rgba(16, 24, 50, 0.16);
       border: 1px solid var(--line);
     }
@@ -52,8 +53,8 @@
       padding: 0;
       margin: 0;
       display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      grid-template-columns: 1fr;
     }
 
     a {
@@ -72,6 +73,14 @@
       filter: brightness(1.02);
     }
 
+    .category {
+      border: 1px solid #d6e2f7;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 12px 28px rgba(20, 30, 55, 0.08);
+      overflow: hidden;
+    }
+
     details {
       margin: 0;
     }
@@ -80,19 +89,12 @@
       list-style: none;
       cursor: pointer;
       user-select: none;
-      text-decoration: none;
-      color: var(--link);
-      background: var(--linkBg);
-      border: 1px solid #d6e2f7;
-      border-radius: 12px;
-      padding: 12px;
-      display: block;
-      font-weight: 700;
-    }
-
-    summary:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.02);
+      padding: 14px 16px;
+      display: grid;
+      gap: 6px;
+      background: linear-gradient(120deg, #edf3ff, #fff3e4);
+      color: var(--ink);
+      border-bottom: 1px solid rgba(211, 222, 239, 0.7);
     }
 
     summary::-webkit-details-marker {
@@ -103,17 +105,89 @@
       content: "";
     }
 
-    .subbuttons {
-      display: flex;
-      gap: 10px;
-      padding: 10px 12px 12px;
+    summary:hover {
+      filter: brightness(1.02);
     }
 
-    .subbuttons a {
-      display: inline-block;
-      width: auto;
+    .summary-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .summary-desc {
+      font-size: 0.92rem;
+      color: var(--sub);
+    }
+
+    .category-grid {
+      display: grid;
+      gap: 14px;
+      padding: 14px 16px 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid #d6e2f7;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(20, 30, 55, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .preview {
+      height: 110px;
+      border-radius: 12px;
+      border: 1px solid rgba(35, 64, 111, 0.18);
+      background: linear-gradient(130deg, #ebf1ff, #fbf3e5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview::after {
+      content: "";
+      position: absolute;
+      inset: 18px 16px 26px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)),
+        radial-gradient(circle at 75% 70%, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0));
+      opacity: 0.85;
+    }
+
+    .preview.placeholder {
+      background: linear-gradient(135deg, #dde6f8, #f6e7d4 60%, #f2f7ff);
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    .card .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card .actions a {
       padding: 8px 10px;
-      font-weight: 700;
+      font-size: 0.92rem;
+      background: #fff5e4;
+      border-color: #f2d3a8;
+      color: #7b4b1c;
+    }
+
+    .card .actions a.secondary {
+      background: var(--linkBg);
+      border-color: #d6e2f7;
+      color: var(--link);
     }
 
     .small {
@@ -126,26 +200,219 @@
 <body>
   <main>
     <h1>ML5 Demo Hub</h1>
-    <p>Open any mini-project from this single page.</p>
+    <p>Pick a category to reveal the easy + advanced demo cards.</p>
 
     <ul>
-      <li>
+      <li class="category">
         <details>
-          <summary>Face Mesh</summary>
-          <div class="subbuttons">
-            <a href="./Facemesh/Easy/index.html">Easy</a>
-            <a href="./Facemesh/Advanced/index.html">Advanced</a>
+          <summary>
+            <div class="summary-title">Face Mesh</div>
+            <div class="summary-desc">Tracks facial landmarks for expressive visuals and gestures.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Landmark dots with blink ripples and mouth glow.</p>
+              <div class="actions">
+                <a class="secondary" href="./Facemesh/Easy/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Spacey constellation with debug overlay and styling.</p>
+              <div class="actions">
+                <a class="secondary" href="./Facemesh/Advanced/index.html">Open demo</a>
+              </div>
+            </div>
           </div>
         </details>
       </li>
-      <li><a href="./ImageClassification/index.html">Image Classification - Label Reactor</a></li>
-      <li><a href="./PoseEstimation/index.html">Pose Estimation - Joint Radar</a></li>
-      <li><a href="./ObjectDetection/index.html">Object Detection - Biggest Box</a></li>
-      <li><a href="./SoundClassification/index.html">Sound Classification - Sound Color</a></li>
-      <li><a href="./HandPose/index.html">Hand Pose - Fingertip Trail</a></li>
-      <li><a href="./BodySegmentation/index.html">Body Segmentation - Person Aura</a></li>
-      <li><a href="./SentimentAnalysis/index.html">Sentiment Analysis - Mood Meter</a></li>
-      <li><a href="./FeatureExtractor/index.html">Feature Extractor - Two-Class Trainer</a></li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Image Classification</div>
+            <div class="summary-desc">Labels objects in the camera feed using MobileNet.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Reactive color wash based on live labels.</p>
+              <div class="actions">
+                <a class="secondary" href="./ImageClassification/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Pose Estimation</div>
+            <div class="summary-desc">Maps body keypoints to interactive feedback.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Wrist height drives radar rings for quick learning.</p>
+              <div class="actions">
+                <a class="secondary" href="./PoseEstimation/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Object Detection</div>
+            <div class="summary-desc">Finds and highlights objects with bounding boxes.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Largest detected object gets a spotlight box.</p>
+              <div class="actions">
+                <a class="secondary" href="./ObjectDetection/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Sound Classification</div>
+            <div class="summary-desc">Listens to microphone audio and labels sound events.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Audio labels drive color and pulse visuals.</p>
+              <div class="actions">
+                <a class="secondary" href="./SoundClassification/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Hand Pose</div>
+            <div class="summary-desc">Tracks hand landmarks for gesture-driven effects.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Finger trails with a pinch palette toggle.</p>
+              <div class="actions">
+                <a class="secondary" href="./HandPose/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Body Segmentation</div>
+            <div class="summary-desc">Separates person from background to apply effects.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Live aura mask wraps your silhouette.</p>
+              <div class="actions">
+                <a class="secondary" href="./BodySegmentation/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Sentiment Analysis</div>
+            <div class="summary-desc">Scores text as positive or negative sentiment.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Type a line and watch the sentiment meter move.</p>
+              <div class="actions">
+                <a class="secondary" href="./SentimentAnalysis/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
+      <li class="category">
+        <details>
+          <summary>
+            <div class="summary-title">Feature Extractor</div>
+            <div class="summary-desc">Train custom labels on top of a pre-trained model.</div>
+          </summary>
+          <div class="category-grid">
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Easy</h3>
+              <p>Capture two classes and train a live classifier.</p>
+              <div class="actions">
+                <a class="secondary" href="./FeatureExtractor/index.html">Open demo</a>
+              </div>
+            </div>
+            <div class="card">
+              <div class="preview placeholder"></div>
+              <h3>Advanced</h3>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </details>
+      </li>
     </ul>
 
     <p class="small">Tip: For camera and microphone demos, use localhost instead of opening files directly.</p>

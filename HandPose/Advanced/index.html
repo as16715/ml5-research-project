@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hand Pose Advanced - Fruit Slice Trail</title>
+  <style>
+    :root {
+      --bg: #0b0f1d;
+      --panel: rgba(15, 22, 40, 0.75);
+      --ink: #eef2ff;
+      --sub: rgba(214, 221, 245, 0.7);
+      --accent: #ffb85c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1b2442, var(--bg));
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(20, 28, 52, 0.85);
+      border: 1px solid rgba(140, 170, 255, 0.35);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .nav-btn.secondary {
+      background: rgba(30, 42, 78, 0.85);
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid rgba(140, 170, 255, 0.2);
+      box-shadow: 0 18px 38px rgba(10, 15, 30, 0.4);
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.35rem, 2.6vw, 2rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--sub);
+      max-width: 520px;
+    }
+
+    .tips {
+      display: grid;
+      gap: 6px;
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    #sketch canvas {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(8, 12, 26, 0.55);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav class="topbar">
+      <a class="nav-btn" href="../../index.html">Back to Hub</a>
+      <a class="nav-btn" href="https://docs.ml5js.org/#/reference/handpose" target="_blank" rel="noreferrer">ml5 Docs</a>
+      <a class="nav-btn secondary" href="./README.md">Project README</a>
+    </nav>
+    <section class="hero">
+      <div>
+        <h1>Advanced Hand Pose: Fruit Slice Trail</h1>
+        <p>Swipe your index finger to slice the fruit in mid-air. Fast swipes leave a glowing blade trail.</p>
+      </div>
+      <div class="tips">
+        <div>Allow camera access when prompted.</div>
+        <div>Swipe fast to trigger the slice.</div>
+        <div>Fruits will keep spawning endlessly.</div>
+      </div>
+    </section>
+    <div id="sketch"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    const FRUIT_FILES = ["banana.png", "orange.png", "strawberry.png"];
+    const GRAVITY = 0.35;
+    const SLICE_SPEED = 12;
+    const TRAIL_DECAY = 14;
+
+    let video;
+    let handPose;
+    let hands = [];
+    let fruits = [];
+    let pieces = [];
+    let slashes = [];
+    let trail = [];
+    let fruitSprites = [];
+    let lastFinger = null;
+    let nextSpawnFrame = 0;
+    let score = 0;
+
+    function preload() {
+      handPose = ml5.handPose({
+        maxHands: 1,
+        flipped: true
+      });
+
+      fruitSprites = FRUIT_FILES.map((file) => ({
+        file,
+        img: loadImage(`./Images/${file}`)
+      }));
+    }
+
+    function setup() {
+      const canvas = createCanvas(960, 540);
+      canvas.parent("sketch");
+      pixelDensity(1);
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      handPose.detectStart(video, (results) => {
+        hands = results || [];
+      });
+
+      textFont("Trebuchet MS");
+      scheduleNextSpawn();
+    }
+
+    function draw() {
+      background(8, 10, 18);
+      image(video, 0, 0, width, height);
+      fill(6, 8, 16, 150);
+      noStroke();
+      rect(0, 0, width, height);
+
+      updateHandTrail();
+
+      for (let i = fruits.length - 1; i >= 0; i--) {
+        const fruit = fruits[i];
+        fruit.update();
+        fruit.draw();
+        if (fruit.offscreen()) {
+          fruits.splice(i, 1);
+        }
+      }
+
+      for (let i = pieces.length - 1; i >= 0; i--) {
+        const piece = pieces[i];
+        piece.update();
+        piece.draw();
+        if (piece.offscreen()) {
+          pieces.splice(i, 1);
+        }
+      }
+
+      drawTrail();
+      drawSlashes();
+      drawHUD();
+
+      if (frameCount >= nextSpawnFrame) {
+        spawnFruit();
+        if (random() < 0.25) {
+          spawnFruit();
+        }
+        scheduleNextSpawn();
+      }
+    }
+
+    function scheduleNextSpawn() {
+      nextSpawnFrame = frameCount + floor(random(26, 60));
+    }
+
+    function spawnFruit() {
+      const pick = random(fruitSprites);
+      const base = random(85, 125);
+      const aspect = pick.img.width / pick.img.height;
+      let w = base;
+      let h = base;
+      if (aspect > 1) {
+        h = base / aspect;
+      } else {
+        w = base * aspect;
+      }
+
+      const fruit = new Fruit(pick.img, w, h);
+      fruit.pos = createVector(random(80, width - 80), height + random(40, 120));
+      fruit.vel = createVector(random(-2.4, 2.4), random(-18, -13));
+      fruit.rotation = random(TWO_PI);
+      fruit.spin = random(-0.05, 0.05);
+      fruits.push(fruit);
+    }
+
+    function updateHandTrail() {
+      if (hands.length === 0 || !hands[0].keypoints) {
+        lastFinger = null;
+        return;
+      }
+
+      const tip = hands[0].keypoints[8];
+      const current = createVector(tip.x, tip.y);
+
+      if (lastFinger) {
+        const speed = p5.Vector.dist(current, lastFinger);
+        const angle = atan2(current.y - lastFinger.y, current.x - lastFinger.x);
+
+        if (speed > SLICE_SPEED) {
+          attemptSlice(lastFinger, current, angle);
+        }
+      }
+
+      trail.push({ x: current.x, y: current.y, life: 255 });
+      lastFinger = current;
+    }
+
+    function attemptSlice(start, end, angle) {
+      let sliced = 0;
+      for (let i = fruits.length - 1; i >= 0; i--) {
+        const fruit = fruits[i];
+        if (segmentDistance(fruit.pos, start, end) <= fruit.radius) {
+          sliceFruit(fruit, angle);
+          fruits.splice(i, 1);
+          sliced += 1;
+        }
+      }
+
+      if (sliced > 0) {
+        score += sliced;
+        slashes.push(new SlashEffect(p5.Vector.lerp(start, end, 0.5), angle));
+      }
+    }
+
+    function sliceFruit(fruit, angle) {
+      const normal = createVector(-sin(angle), cos(angle));
+      const separation = 2.8;
+      const baseVel = fruit.vel.copy();
+
+      pieces.push(new FruitPiece(
+        fruit.img,
+        fruit.w,
+        fruit.h,
+        fruit.pos.copy().add(p5.Vector.mult(normal, 6)),
+        p5.Vector.add(baseVel, p5.Vector.mult(normal, separation)),
+        fruit.rotation,
+        fruit.spin + random(-0.02, 0.02),
+        angle,
+        1
+      ));
+
+      pieces.push(new FruitPiece(
+        fruit.img,
+        fruit.w,
+        fruit.h,
+        fruit.pos.copy().add(p5.Vector.mult(normal, -6)),
+        p5.Vector.add(baseVel, p5.Vector.mult(normal, -separation)),
+        fruit.rotation,
+        -fruit.spin + random(-0.02, 0.02),
+        angle,
+        -1
+      ));
+    }
+
+    function drawTrail() {
+      for (let i = trail.length - 1; i >= 0; i--) {
+        trail[i].life -= TRAIL_DECAY;
+        if (trail[i].life <= 0) {
+          trail.splice(i, 1);
+        }
+      }
+
+      for (let i = 1; i < trail.length; i++) {
+        const a = trail[i - 1];
+        const b = trail[i];
+        const alpha = min(a.life, b.life);
+        stroke(130, 220, 255, alpha);
+        strokeWeight(map(alpha, 0, 255, 1.2, 4.5));
+        line(a.x, a.y, b.x, b.y);
+      }
+
+      if (trail.length > 0) {
+        const tip = trail[trail.length - 1];
+        noStroke();
+        fill(255, 240);
+        circle(tip.x, tip.y, 10);
+      }
+    }
+
+    function drawSlashes() {
+      for (let i = slashes.length - 1; i >= 0; i--) {
+        const slash = slashes[i];
+        slash.update();
+        slash.draw();
+        if (slash.done()) {
+          slashes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawHUD() {
+      fill(255);
+      textAlign(LEFT, TOP);
+      textSize(16);
+      text(`Slices: ${score}`, 14, 14);
+      textSize(12);
+      fill(220);
+      text("Swipe quickly to slice fruit.", 14, 36);
+    }
+
+    function segmentDistance(point, start, end) {
+      const l2 = pow(dist(start.x, start.y, end.x, end.y), 2);
+      if (l2 === 0) {
+        return dist(point.x, point.y, start.x, start.y);
+      }
+      let t = ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) / l2;
+      t = constrain(t, 0, 1);
+      const projX = start.x + t * (end.x - start.x);
+      const projY = start.y + t * (end.y - start.y);
+      return dist(point.x, point.y, projX, projY);
+    }
+
+    class Fruit {
+      constructor(img, w, h) {
+        this.img = img;
+        this.w = w;
+        this.h = h;
+        this.pos = createVector(0, 0);
+        this.vel = createVector(0, 0);
+        this.rotation = 0;
+        this.spin = 0;
+        this.radius = max(this.w, this.h) * 0.45;
+      }
+
+      update() {
+        this.vel.y += GRAVITY;
+        this.pos.add(this.vel);
+        this.rotation += this.spin;
+      }
+
+      draw() {
+        push();
+        translate(this.pos.x, this.pos.y);
+        rotate(this.rotation);
+        imageMode(CENTER);
+        image(this.img, 0, 0, this.w, this.h);
+        pop();
+      }
+
+      offscreen() {
+        return this.pos.y - max(this.w, this.h) > height + 140;
+      }
+    }
+
+    class FruitPiece {
+      constructor(img, w, h, pos, vel, rotation, spin, sliceAngle, side) {
+        this.img = img;
+        this.w = w;
+        this.h = h;
+        this.pos = pos;
+        this.vel = vel;
+        this.rotation = rotation;
+        this.spin = spin;
+        this.sliceAngle = sliceAngle;
+        this.side = side;
+      }
+
+      update() {
+        this.vel.y += GRAVITY;
+        this.pos.add(this.vel);
+        this.rotation += this.spin;
+      }
+
+      draw() {
+        push();
+        translate(this.pos.x, this.pos.y);
+        rotate(this.rotation);
+        const ctx = drawingContext;
+        ctx.save();
+        const localAngle = this.sliceAngle - this.rotation;
+        ctx.rotate(-localAngle);
+        ctx.beginPath();
+        const L = max(this.w, this.h) * 2;
+        if (this.side > 0) {
+          ctx.rect(-L, 0, L * 2, L * 2);
+        } else {
+          ctx.rect(-L, -L * 2, L * 2, L * 2);
+        }
+        ctx.clip();
+        ctx.rotate(localAngle);
+        imageMode(CENTER);
+        image(this.img, 0, 0, this.w, this.h);
+        ctx.restore();
+        pop();
+      }
+
+      offscreen() {
+        return this.pos.y - max(this.w, this.h) > height + 200 ||
+          this.pos.x < -200 || this.pos.x > width + 200;
+      }
+    }
+
+    class SlashEffect {
+      constructor(pos, angle) {
+        this.pos = pos.copy();
+        this.angle = angle;
+        this.life = 255;
+      }
+
+      update() {
+        this.life -= 18;
+      }
+
+      draw() {
+        const length = 60;
+        stroke(255, 200, 130, this.life);
+        strokeWeight(3);
+        line(
+          this.pos.x - cos(this.angle) * length,
+          this.pos.y - sin(this.angle) * length,
+          this.pos.x + cos(this.angle) * length,
+          this.pos.y + sin(this.angle) * length
+        );
+      }
+
+      done() {
+        return this.life <= 0;
+      }
+    }
+  </script>
+</body>
+</html>

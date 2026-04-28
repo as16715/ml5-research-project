@@ -38,7 +38,7 @@ By the end, this repo serves as a **living micro-project library** that anyone c
 | 3 | Pose Estimation | [Easy](./PoseEstimation) | 🔜 Coming Soon |
 | 4 | Object Detection | [Easy](./ObjectDetection) | 🔜 Coming Soon |
 | 5 | Sound Classification | [Easy](./SoundClassification) | 🔜 Coming Soon |
-| 6 | Hand Pose | [Easy](./HandPose) | 🔜 Coming Soon |
+| 6 | Hand Pose | [Easy](./HandPose/Easy) | [Advanced](./HandPose/Advanced) |
 | 7 | Body Segmentation | [Easy](./BodySegmentation) | 🔜 Coming Soon |
 | 8 | Sentiment Analysis | [Easy](./SentimentAnalysis) | 🔜 Coming Soon |
 | 9 | Neural Network | 🔜 Coming Soon | 🔜 Coming Soon |

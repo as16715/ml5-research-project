@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pose Estimation - Bunny Puppet Theater</title>
+  <style>
+    :root {
+      --bg: #14091e;
+      --panel: rgba(28, 14, 40, 0.78);
+      --ink: #f7eedf;
+      --sub: rgba(240, 220, 200, 0.74);
+      --gold: #e6b65a;
+      --velvet: #7a1828;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #2a1438, var(--bg));
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(60, 30, 70, 0.85);
+      border: 1px solid rgba(230, 182, 90, 0.45);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .nav-btn.secondary { background: rgba(120, 28, 50, 0.85); }
+
+    .hero {
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid rgba(230, 182, 90, 0.3);
+      box-shadow: 0 18px 38px rgba(10, 5, 18, 0.5);
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.35rem, 2.6vw, 2rem);
+      color: var(--gold);
+      letter-spacing: 0.5px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--sub);
+      max-width: 640px;
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) 240px;
+    }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .stage-wrap {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0c0518;
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(230, 182, 90, 0.25);
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+    }
+
+    .now-playing {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 8, 22, 0.78);
+      border: 1px solid rgba(230, 182, 90, 0.4);
+      color: var(--gold);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      letter-spacing: 0.6px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .status {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 8, 22, 0.78);
+      color: var(--sub);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      pointer-events: none;
+    }
+
+    .claw-meter {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(15, 8, 22, 0.78);
+      color: var(--sub);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .claw-meter .bar {
+      width: 80px;
+      height: 6px;
+      background: rgba(230, 182, 90, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .claw-meter .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffd166, #ff7eb6);
+      transition: width 0.08s linear;
+    }
+
+    aside {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(230, 182, 90, 0.28);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    ul.tips {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--sub);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    ul.tips li { margin-bottom: 6px; }
+    ul.tips strong { color: var(--ink); }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--sub);
+      margin-top: 8px;
+    }
+
+    .toggle-row input { transform: scale(1.1); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a class="nav-btn" href="../../index.html">Back to Hub</a>
+      <div class="nav-group">
+        <a class="nav-btn" href="https://docs.ml5js.org/#/reference/bodypose" target="_blank" rel="noreferrer">ml5 Docs</a>
+        <a class="nav-btn secondary" href="./README.md">Project README</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h1>Bunny Puppet Theater</h1>
+      <p>Step in front of your camera and become the bunny. Pose tracking pins fluffy ears to your head, a pink twitchy nose with whiskers and blush to your face, and big cartoon paws to your hands. Raise your wrists above your shoulders and your bunny extends its claws &mdash; lower them and the claws sheath back into soft pink toe pads.</p>
+    </section>
+
+    <div class="layout">
+      <div class="stage-wrap" id="stageWrap">
+        <div class="now-playing">Snow Bunny</div>
+        <div class="status" id="status">Loading model...</div>
+        <div class="claw-meter">
+          <span>Claws</span>
+          <div class="bar"><div class="fill" id="clawFill"></div></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="panel">
+          <h2>How to perform</h2>
+          <ul class="tips">
+            <li>Stand back so your <strong>head and shoulders</strong> are clearly in frame.</li>
+            <li>Look straight at the camera so the ears anchor cleanly to your head.</li>
+            <li>Lift your <strong>wrists above your shoulders</strong> to extend the claws.</li>
+            <li>Lower your hands to sheath them back into soft toe pads.</li>
+            <li>Watch the nose twitch &mdash; the bunny is alive even when you're still.</li>
+          </ul>
+          <div class="toggle-row">
+            <label for="debugToggle">Show keypoints</label>
+            <input type="checkbox" id="debugToggle" />
+          </div>
+          <div class="toggle-row">
+            <label for="stageToggle">Stage curtains</label>
+            <input type="checkbox" id="stageToggle" checked />
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script src="./bunny.js"></script>
+  <script>
+    let video, bodyPose;
+    let poses = [];
+    let stage;
+    let showDebug = false;
+    let showStage = true;
+    let modelReady = false;
+
+    const els = {
+      status:       document.getElementById("status"),
+      stageWrap:    document.getElementById("stageWrap"),
+      debugToggle:  document.getElementById("debugToggle"),
+      stageToggle:  document.getElementById("stageToggle"),
+      clawFill:     document.getElementById("clawFill")
+    };
+
+    function preload() {
+      bodyPose = ml5.bodyPose("MoveNet", { flipped: true }, () => {
+        modelReady = true;
+        setStatus("Model ready - step into frame");
+      });
+    }
+
+    function setup() {
+      const canvas = createCanvas(900, 600);
+      canvas.parent(els.stageWrap);
+      pixelDensity(1);
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      bodyPose.detectStart(video, (results) => {
+        poses = results || [];
+      });
+
+      stage = new BunnyTheater.Stage(width, height);
+
+      els.debugToggle.addEventListener("change", (e) => { showDebug = e.target.checked; });
+      els.stageToggle.addEventListener("change", (e) => { showStage = e.target.checked; });
+    }
+
+    function draw() {
+      // 1. Live camera feed as the backdrop.
+      image(video, 0, 0, width, height);
+
+      // 2. Subtle vignette so the focus reads as theatrical.
+      if (showStage) stage.drawVignette(this);
+
+      const pose = poses[0];
+
+      // 3. The bunny puppet pieces overlaid on the user's body.
+      if (pose) {
+        BunnyTheater.drawBunny(this, pose, millis());
+      } else if (modelReady) {
+        drawCue("Step into frame to begin");
+      }
+
+      // 4. Stage decor on top (curtains, valance, footlights, dust).
+      if (showStage) stage.drawForeground(this);
+
+      // 5. Optional debug overlay.
+      if (showDebug && pose) drawKeypoints(pose);
+
+      // 6. Update HUD claw meter.
+      const claw = pose ? BunnyTheater.averageClawAmount(pose) : 0;
+      els.clawFill.style.width = `${(claw * 100).toFixed(0)}%`;
+    }
+
+    function drawCue(message) {
+      push();
+      fill(0, 0, 0, 130);
+      noStroke();
+      const w = textWidth(message) + 40;
+      rectMode(CENTER);
+      rect(width / 2, height / 2, w, 50, 14);
+      fill(255, 230, 180);
+      textAlign(CENTER, CENTER);
+      textSize(20);
+      text(message, width / 2, height / 2);
+      pop();
+    }
+
+    function drawKeypoints(pose) {
+      push();
+      noStroke();
+      for (const name in pose) {
+        const k = pose[name];
+        if (!k || typeof k !== "object" || k.x === undefined) continue;
+        if (k.confidence !== undefined && k.confidence < 0.2) continue;
+        fill(140, 220, 255, 220);
+        circle(k.x, k.y, 6);
+      }
+      pop();
+    }
+
+    function setStatus(msg) {
+      els.status.textContent = msg;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Classification - Advanced Scavenger Hunt</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #1b1f3a, #3a2150 55%, #6d1f5a);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: #f4f1ff;
+    }
+
+    main {
+      width: min(94vw, 760px);
+      text-align: center;
+      padding: 18px 0 40px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.3rem, 2.8vw, 2rem);
+      letter-spacing: 0.5px;
+    }
+
+    p.tagline {
+      margin: 0 0 16px;
+      color: #c9c3e6;
+      font-size: 0.95rem;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .nav-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #f4f1ff;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .nav-btn.secondary {
+      background: rgba(255, 220, 120, 0.22);
+      border-color: rgba(255, 220, 120, 0.55);
+    }
+
+    .stage {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.45);
+      background: #0c0d1f;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px;
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: rgba(15, 15, 35, 0.7);
+      backdrop-filter: blur(4px);
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .chip.target {
+      background: linear-gradient(135deg, #ffb347, #ff6f9c);
+      color: #2a0e3a;
+      font-size: 1.05rem;
+    }
+
+    .chip.timer-round.warn {
+      background: rgba(255, 80, 90, 0.85);
+      color: #fff;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 9, 25, 0.78);
+      backdrop-filter: blur(6px);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      pointer-events: auto;
+    }
+
+    .overlay-card {
+      max-width: 460px;
+      text-align: center;
+    }
+
+    .overlay-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.6rem;
+    }
+
+    .overlay-card p {
+      margin: 0 0 14px;
+      color: #d6d1ee;
+      line-height: 1.5;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 22px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 1rem;
+      background: linear-gradient(135deg, #ffd166, #ff7eb6);
+      color: #2a0e3a;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:hover { filter: brightness(1.05); }
+
+    .item-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin: 12px 0 18px;
+    }
+
+    .item-list span {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+    }
+
+    .feedback {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .feedback.show { opacity: 1; }
+    .feedback.hit { color: #b9ff9b; }
+    .feedback.miss { color: #ff8a9b; }
+
+    footer {
+      margin-top: 14px;
+      font-size: 0.82rem;
+      color: #c9c3e6;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a class="nav-btn" href="../../index.html">Back to Hub</a>
+      <div class="nav-group">
+        <a class="nav-btn" href="https://docs.ml5js.org/#/reference/image-classifier" target="_blank" rel="noreferrer">ml5 Docs</a>
+        <a class="nav-btn secondary" href="./README.md">Project README</a>
+      </div>
+    </div>
+    <h1>Advanced Image Classification: Scavenger Hunt</h1>
+    <p class="tagline">A target object pops up &mdash; grab it from around the house and hold it up to the camera before the timer runs out!</p>
+
+    <div class="stage" id="stage">
+      <div class="hud" id="hud" style="display:none;">
+        <div class="hud-row">
+          <div class="chip" id="scoreChip">Score: 0</div>
+          <div class="chip" id="gameTimerChip">Game: 2:00</div>
+        </div>
+        <div class="hud-row" style="justify-content:center;">
+          <div class="chip target" id="targetChip">Find: ...</div>
+        </div>
+        <div class="hud-row">
+          <div class="chip" id="seeingChip">Seeing: &mdash;</div>
+          <div class="chip timer-round" id="roundTimerChip">Round: 20</div>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="overlay" id="overlay">
+        <div class="overlay-card" id="overlayCard">
+          <h2 id="overlayTitle">Loading model...</h2>
+          <p id="overlayBody">Hold tight while MobileNet warms up.</p>
+          <div class="item-list" id="overlayItems"></div>
+          <button class="btn" id="overlayBtn" style="display:none;">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>Powered by <strong>ml5.js</strong> imageClassifier (MobileNet) &middot; runs entirely in your browser.</footer>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script>
+    // ---- Scavenger hunt configuration ----------------------------------------
+    // Each item maps to the keywords MobileNet/ImageNet may return.
+    // The classifier label is lowercased and matched with .includes().
+    const ITEMS = [
+      { name: "Bottle",        emoji: "BOTTLE",   keys: ["bottle", "flask"] },
+      { name: "Computer Mouse",emoji: "MOUSE",    keys: ["mouse"] },
+      { name: "Glasses",       emoji: "GLASSES",  keys: ["sunglass", "spectacle", "eyeglass"] },
+      { name: "Cup or Mug",    emoji: "CUP",      keys: ["cup", "mug", "coffee"] },
+      { name: "Book",          emoji: "BOOK",     keys: ["book", "notebook", "binder"] },
+      { name: "Banana",        emoji: "BANANA",   keys: ["banana"] },
+      { name: "Keyboard",      emoji: "KEYBOARD", keys: ["keyboard"] },
+      { name: "Cell Phone",    emoji: "PHONE",    keys: ["cellular", "cellphone", "ipod", "hand-held"] },
+      { name: "Remote Control",emoji: "REMOTE",   keys: ["remote"] },
+      { name: "Wristwatch",    emoji: "WATCH",    keys: ["watch", "stopwatch"] },
+      { name: "Wallet or Purse", emoji: "WALLET", keys: ["wallet", "purse", "billfold"] },
+      { name: "Scissors",      emoji: "SCISSORS", keys: ["scissor"] },
+      { name: "Headphones",    emoji: "HEADPHONES", keys: ["headphone", "headset"] },
+      { name: "Pen or Pencil", emoji: "PEN",      keys: ["pen", "pencil", "ballpoint", "fountain"] },
+      { name: "Apple",         emoji: "APPLE",    keys: ["apple", "granny"] },
+      { name: "Spoon",         emoji: "SPOON",    keys: ["spoon", "ladle"] }
+    ];
+
+    const GAME_DURATION_MS  = 120 * 1000; // total game length
+    const ROUND_DURATION_MS = 20  * 1000; // per-target time
+    const HIT_CONFIDENCE    = 0.30;       // min confidence to count as a sighting
+    const HIT_FRAMES        = 3;          // need this many consecutive sightings (debounce)
+    const HISCORE_KEY       = "ml5-scavenger-hiscore";
+
+    // ---- Runtime state -------------------------------------------------------
+    let video, classifier;
+    let modelReady = false;
+    let label = "warming up";
+    let confidence = 0;
+
+    let phase = "idle"; // idle | playing | over
+    let score = 0;
+    let gameStartedAt = 0;
+    let roundStartedAt = 0;
+    let currentTarget = null;
+    let recentTargets = [];
+    let consecutiveHits = 0;
+    let feedbackUntil = 0;
+
+    // Cached DOM nodes
+    const el = (id) => document.getElementById(id);
+    const overlay      = () => el("overlay");
+    const overlayTitle = () => el("overlayTitle");
+    const overlayBody  = () => el("overlayBody");
+    const overlayBtn   = () => el("overlayBtn");
+    const overlayItems = () => el("overlayItems");
+    const hud          = () => el("hud");
+    const feedback     = () => el("feedback");
+
+    // ---- p5 lifecycle --------------------------------------------------------
+    function preload() {
+      classifier = ml5.imageClassifier("MobileNet", () => {
+        modelReady = true;
+        showStartScreen();
+      });
+    }
+
+    function setup() {
+      const canvas = createCanvas(640, 480);
+      canvas.parent(document.getElementById("stage"));
+
+      video = createCapture(VIDEO, { flipped: true });
+      video.size(width, height);
+      video.hide();
+
+      textAlign(CENTER, CENTER);
+      textFont("Trebuchet MS");
+
+      classifyVideo();
+      el("overlayBtn").addEventListener("click", onStartClicked);
+    }
+
+    function classifyVideo() {
+      if (!classifier) return;
+      classifier.classify(video, gotResult);
+    }
+
+    function gotResult(results) {
+      if (results && results.length > 0) {
+        label = results[0].label;
+        confidence = results[0].confidence;
+
+        if (phase === "playing") {
+          checkForHit();
+        }
+      }
+      classifyVideo();
+    }
+
+    function draw() {
+      background(12, 13, 31);
+      image(video, 0, 0, width, height);
+
+      if (phase === "playing") {
+        updateTimers();
+      }
+
+      // tiny "seeing" readout reflected directly via DOM (cleaner than canvas text)
+      el("seeingChip").innerHTML = `Seeing: ${label} <span style="opacity:0.7">${(confidence*100).toFixed(0)}%</span>`;
+
+      if (millis() > feedbackUntil) {
+        feedback().classList.remove("show", "hit", "miss");
+      }
+    }
+
+    // ---- Game flow -----------------------------------------------------------
+    function showStartScreen() {
+      phase = "idle";
+      const hi = Number(localStorage.getItem(HISCORE_KEY) || 0);
+      overlayTitle().textContent = "Scavenger Hunt";
+      overlayBody().innerHTML = `Find each requested item and hold it in front of your camera before the round timer runs out.<br>
+        Game lasts <strong>2 minutes</strong>. Each round gives you <strong>20 seconds</strong>.<br>
+        Faster catches = more points. Best score: <strong>${hi}</strong>.`;
+      overlayItems().innerHTML = ITEMS.map(i => `<span>${i.name}</span>`).join("");
+      overlayBtn().textContent = "Start Game";
+      overlayBtn().style.display = "inline-block";
+      overlay().style.display = "grid";
+      hud().style.display = "none";
+    }
+
+    function onStartClicked() {
+      if (!modelReady) return;
+      startGame();
+    }
+
+    function startGame() {
+      phase = "playing";
+      score = 0;
+      recentTargets = [];
+      gameStartedAt = millis();
+      overlay().style.display = "none";
+      hud().style.display = "flex";
+      el("scoreChip").textContent = "Score: 0";
+      pickNextTarget();
+    }
+
+    function pickNextTarget() {
+      // avoid repeating the last 3 targets so it feels varied
+      let pool = ITEMS.filter(i => !recentTargets.includes(i.name));
+      if (pool.length === 0) pool = ITEMS;
+      currentTarget = pool[Math.floor(Math.random() * pool.length)];
+      recentTargets.push(currentTarget.name);
+      if (recentTargets.length > 3) recentTargets.shift();
+
+      consecutiveHits = 0;
+      roundStartedAt = millis();
+      el("targetChip").textContent = `Find: ${currentTarget.name}`;
+    }
+
+    function updateTimers() {
+      const now = millis();
+      const gameLeft  = Math.max(0, GAME_DURATION_MS - (now - gameStartedAt));
+      const roundLeft = Math.max(0, ROUND_DURATION_MS - (now - roundStartedAt));
+
+      const min = Math.floor(gameLeft / 60000);
+      const sec = Math.floor((gameLeft % 60000) / 1000);
+      el("gameTimerChip").textContent = `Game: ${min}:${sec.toString().padStart(2, "0")}`;
+
+      const roundSec = Math.ceil(roundLeft / 1000);
+      const roundChip = el("roundTimerChip");
+      roundChip.textContent = `Round: ${roundSec}`;
+      roundChip.classList.toggle("warn", roundSec <= 5);
+
+      if (gameLeft <= 0) {
+        endGame();
+      } else if (roundLeft <= 0) {
+        showFeedback("MISS", "miss");
+        pickNextTarget();
+      }
+    }
+
+    function checkForHit() {
+      if (!currentTarget) return;
+      const lower = label.toLowerCase();
+      const matched = currentTarget.keys.some(k => lower.includes(k));
+
+      if (matched && confidence >= HIT_CONFIDENCE) {
+        consecutiveHits++;
+        if (consecutiveHits >= HIT_FRAMES) {
+          awardHit();
+        }
+      } else {
+        consecutiveHits = 0;
+      }
+    }
+
+    function awardHit() {
+      const roundLeft = Math.max(0, ROUND_DURATION_MS - (millis() - roundStartedAt));
+      const seconds = Math.ceil(roundLeft / 1000);
+      const points = 100 + seconds * 5; // faster = more
+      score += points;
+      el("scoreChip").textContent = `Score: ${score}`;
+      showFeedback(`+${points}`, "hit");
+      pickNextTarget();
+    }
+
+    function showFeedback(text, kind) {
+      const f = feedback();
+      f.textContent = text;
+      f.classList.remove("hit", "miss");
+      f.classList.add("show", kind);
+      feedbackUntil = millis() + 900;
+    }
+
+    function endGame() {
+      phase = "over";
+      const prev = Number(localStorage.getItem(HISCORE_KEY) || 0);
+      const isNew = score > prev;
+      if (isNew) localStorage.setItem(HISCORE_KEY, String(score));
+
+      overlayTitle().textContent = "Time's up!";
+      overlayBody().innerHTML = `You scored <strong>${score}</strong> points.${
+        isNew ? "<br><span style='color:#ffd166;'>New best score!</span>"
+              : `<br>Best: <strong>${prev}</strong>`
+      }`;
+      overlayItems().innerHTML = "";
+      overlayBtn().textContent = "Play Again";
+      overlay().style.display = "grid";
+      hud().style.display = "none";
+    }
+  </script>
+</body>
+</html>

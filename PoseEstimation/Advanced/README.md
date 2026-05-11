@@ -1,59 +1,229 @@
-# Advanced Pose Estimation - Bunny Puppet Theater
+# Pose Estimation — Advanced: Bunny Puppet Theater
 
-Step in front of your camera and **become the bunny**. ml5 `bodyPose` (MoveNet) tracks your skeleton in real time and pins cartoon bunny pieces &mdash; ears, nose, whiskers, blush, and big paws &mdash; directly onto your body in the live video feed. Behind it all, a theatrical stage frames the scene with red velvet curtains, a golden valance, footlights, and floating dust motes.
+Uses ml5 `bodyPose` (MoveNet) to overlay cartoon bunny puppet pieces directly onto the live camera feed. Ears anchor to your head, a twitching nose and whiskers sit on your face, and big fluffy paws sit on your wrists — with claws that slide out when you raise your hands.
 
-## How it works
-- The **live camera feed** is the backdrop &mdash; you can see yourself the whole time.
-- A subtle vignette dims the edges so the center reads as "lit center stage".
-- Cartoon **bunny pieces** are drawn on top of you, anchored to pose keypoints:
-  - **Ears** anchor to the top of your head (computed from the nose keypoint and head width).
-  - **Heart-shaped pink nose**, **whiskers**, **blush cheeks**, and a tiny mouth anchor to your face.
-  - **Big fluffy paws** anchor to each wrist, oriented along your forearm direction.
-- **Curtains, valance, and footlights** are then drawn on top to frame the performance.
-
-## The signature interaction: claws
-Your wrist height drives the bunny's claws.
-
-- Wrist **at or below your shoulder** &rarr; soft pink toe pads, claws fully sheathed.
-- Wrist **rising above your shoulder** &rarr; claws gradually extend out of each toe.
-- Wrist **well above your head** &rarr; claws fully out.
-
-The HUD in the bottom-right shows a live "Claws" meter so you can see how far each pose pushes the extension.
-
-## How to play
-1. Open `index.html` in a browser.
-2. Allow camera access and wait for "Model ready" to appear.
-3. Stand back so your **head and shoulders** are clearly in frame.
-4. Look at the camera so the ears lock onto your head.
-5. Raise and lower your hands to play with the claws.
-
-## What this teaches
-- ml5 `bodyPose` keypoint tracking with MoveNet
-- Compositing: live `<video>` (drawn into p5 via `image(video, ...)`) underneath custom canvas overlays
-- Anchoring vector graphics to keypoints with proper rotation (paws rotate to match each forearm)
-- Using bezier curves to draw cartoon shapes (ears, nose, palm pad)
-- Driving an animation parameter from a body relationship (wrist-y vs shoulder-y) and easing it into a visual (claw extension)
-- Idle "life" animation &mdash; the nose twitches on a slow sine + occasional sniff so the bunny feels alive even when you stand still
+---
 
 ## Files
-- `index.html` &mdash; layout, stage panel, p5/ml5 boot, draw loop, HUD wiring.
-- `bunny.js` &mdash; the `Stage` class (curtains, valance, footlights, dust, vignette), bunny part renderers (`drawBunnyEars`, `drawBunnyFace`, `drawBunnyPaws`), and the `clawAmount` helper.
-- `README.md` &mdash; this file.
 
-## Tunable knobs (top of `bunny.js`)
-- `COLORS` &mdash; swap the palette to make a chocolate bunny (browns), shadow bunny (grays), or pastel bunny.
-- `OUTLINE_W` &mdash; cartoon outline thickness.
-- Inside `clawAmount` &mdash; change the `0.7` divisor to make claws extend more eagerly or more reluctantly.
-- Inside `Stage.drawCurtains` &mdash; change the `sideW` factor to widen or narrow the stage opening.
+| File | Purpose |
+|---|---|
+| `index.html` | Layout, p5/ml5 boot, draw loop, HUD wiring |
+| `bunny.js` | Stage class, all bunny part drawing functions, claw logic |
 
-## Creative tweak ideas
-- Add a **tail puff** that follows hip movement (when the user turns slightly).
-- Trigger a **hop animation** that bobs the ears when both knees rise quickly.
-- Play a soft **"sniff" sound** synced to the nose twitch using the Web Audio API.
-- Add a fur-color picker to the side panel (snow / chocolate / shadow palettes).
-- Save a screenshot as a "publicity still" using `canvas.toBlob()`.
-- Detect when both wrists are raised and extended for a beat &mdash; trigger a sparkle particle burst around the paws.
+---
 
-## Notes
-- `bodyPose` is loaded with `{ flipped: true }` so the puppet mirrors your real-world movement intuitively (your right hand drives the bunny's right paw on screen).
-- Head-width is estimated from ear keypoints when available, then eye distance, then shoulder distance &mdash; this keeps the ears stable even if one ear keypoint disappears off the side of the frame.
+## Dependencies
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+<script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+<script src="./bunny.js"></script>
+```
+
+---
+
+## How to run
+
+1. Serve over HTTP. Open `index.html`. Allow camera access.
+2. Wait for "Model ready" in the status chip.
+3. Stand back so head and shoulders are clearly in frame.
+4. Raise your wrists above your shoulders to extend the claws.
+
+---
+
+## Architecture overview
+
+`bunny.js` exposes a single global object:
+
+```js
+window.BunnyTheater = { Stage, drawBunny, averageClawAmount, kp };
+```
+
+`index.html` calls these from its inline p5 script. All drawing happens in the p5 `draw()` loop in this order:
+
+1. `image(video, …)` — live camera as backdrop
+2. `stage.drawVignette(p)` — edge darkening
+3. `BunnyTheater.drawBunny(p, pose, millis())` — bunny overlay
+4. `stage.drawForeground(p)` — curtains, valance, footlights, dust
+
+---
+
+## Key variables (index.html)
+
+| Variable | Purpose |
+|---|---|
+| `bodyPose` | ml5 bodyPose model |
+| `video` | Webcam capture |
+| `poses` | Latest detection results array |
+| `stage` | `Stage` instance (theatrical decor) |
+| `showDebug` | If `true`, raw keypoints are drawn as dots |
+
+---
+
+## Step-by-step implementation
+
+### 1. Load the model in `preload()`
+
+```js
+function preload() {
+  bodyPose = ml5.bodyPose("MoveNet", { flipped: true }, () => {
+    modelReady = true;
+    setStatus("Model ready - step into frame");
+  });
+}
+```
+
+### 2. Start detection in `setup()`
+
+```js
+bodyPose.detectStart(video, (results) => {
+  poses = results || [];
+});
+```
+
+### 3. The `kp` helper (bunny.js)
+
+Before using any keypoint, its confidence must be checked. The `kp` helper centralises this check:
+
+```js
+function kp(pose, name, minConf = 0.25) {
+  if (!pose) return null;
+  const p = pose[name];
+  if (!p || p.x === undefined) return null;
+  if (p.confidence !== undefined && p.confidence < minConf) return null;
+  return p;
+}
+```
+
+Usage: `const nose = kp(pose, "nose")` — returns `null` if unavailable.
+
+### 4. Head size estimation (`estimateHeadWidth`)
+
+Ears and the nose piece need to know how big the head is on screen. The function uses the best available landmark pair, falling back gracefully:
+
+```js
+function estimateHeadWidth(pose) {
+  const lEar = kp(pose, "left_ear",  0.15);
+  const rEar = kp(pose, "right_ear", 0.15);
+  if (lEar && rEar) return distance(lEar, rEar) * 1.25;
+
+  const lEye = kp(pose, "left_eye",  0.15);
+  const rEye = kp(pose, "right_eye", 0.15);
+  if (lEye && rEye) return distance(lEye, rEye) * 2.4;
+
+  const lSh = kp(pose, "left_shoulder");
+  const rSh = kp(pose, "right_shoulder");
+  if (lSh && rSh) return distance(lSh, rSh) * 0.55;
+
+  return 100; // last resort fallback
+}
+```
+
+### 5. Drawing the bunny ears (`drawBunnyEars`)
+
+Ears are anchored to the nose keypoint. The "top of head" is estimated as `nose.y - headW * 0.55`. Each ear is drawn with `p.push()` / `p.translate()` / `p.rotate()` / `p.pop()` so they can be tilted independently:
+
+```js
+function drawSingleEar(p, baseX, baseY, length, baseW, tilt) {
+  p.push();
+  p.translate(baseX, baseY);
+  p.rotate(tilt);
+
+  // Outer ear shape using bezier curves
+  p.noStroke();
+  p.fill(...COLORS.fur);
+  p.beginShape();
+  p.vertex(-baseW * 0.5, 0);
+  p.bezierVertex(-baseW * 0.95, -length * 0.45,
+                 -baseW * 0.45, -length * 0.95,
+                  0,            -length);
+  p.bezierVertex( baseW * 0.45, -length * 0.95,
+                  baseW * 0.95, -length * 0.45,
+                  baseW * 0.5,  0);
+  p.endShape(p.CLOSE);
+
+  // Pink inner ear inset
+  p.fill(...COLORS.innerEar);
+  // ... similar bezier path, smaller ...
+
+  // Cartoon outline on top
+  p.stroke(...COLORS.outline);
+  // ... same path again, no fill ...
+  p.pop();
+}
+```
+
+### 6. Drawing paws (`drawBunnyPaws`) — anti-flip fix
+
+Paw orientation is derived from the elbow→wrist angle. When the arm points leftward, `cos(ang) < 0` and a naive `p.rotate(ang)` flips the paw upside-down. The fix:
+
+```js
+function drawPaw(p, x, y, ang, size, claw) {
+  p.push();
+  p.translate(x, y);
+
+  // If cos(ang) < 0, add π to keep the paw right-side up, then mirror X
+  // so the toes still point in the original direction.
+  const drawAng = Math.cos(ang) < 0 ? ang + Math.PI : ang;
+  const xFlip   = Math.cos(ang) < 0 ? -1 : 1;
+  p.rotate(drawAng);
+  p.scale(xFlip, 1);
+
+  // All paw geometry is drawn in local space.
+  // p5's transform (rotate + scale) places it on screen correctly.
+  // ...
+}
+```
+
+With `scale(-1, 1)` active, all `p.vertex(x, y)` calls are rendered at `(-x, y)` in screen space — so the entire paw including claws is mirrored automatically without any coordinate recalculation.
+
+### 7. Claw extension (`clawAmount`)
+
+```js
+function clawAmount(wristY, shoulderY, span) {
+  // claw=0 when wrist is at or below shoulder; claw=1 when span above it
+  const t = (shoulderY - wristY) / (span * 0.7);
+  return Math.max(0, Math.min(1, t));
+}
+```
+
+`span` is the shoulder-to-shoulder distance, used as a body-relative scale so the threshold adapts to the user's distance from the camera.
+
+### 8. The Stage class (theatrical decor)
+
+`Stage` draws three layers:
+
+- **`drawVignette(p)`** — concentric circles with increasing opacity toward the edges, darkening the corners without touching the centre stage.
+- **`drawForeground(p)`** — velvet curtains (drawn as pleat-by-pleat gradient rectangles with a scalloped inner edge), golden valance across the top, row of footlight bulbs at the bottom, and animated dust motes (slow upward drift with sinusoidal wobble).
+- Motes are objects `{x, y, r, vy, drift, driftSpeed, alpha}` stored in an array and updated each frame. When a mote reaches `y < -10` it is respawned below the canvas.
+
+### 9. Nose twitch animation
+
+The nose uses `millis()` (passed in as `time`) to animate a slow sine-wave scale + an occasional large sniff:
+
+```js
+const twitch = 1
+  + Math.sin(time * 0.005) * 0.05
+  + (Math.sin(time * 0.0008) > 0.95 ? 0.15 : 0);
+```
+
+The first term gives a continuous gentle pulse; the second fires a bigger sniff about once every ~8 seconds.
+
+---
+
+## Core ml5 API used
+
+| Call | What it does |
+|---|---|
+| `ml5.bodyPose("MoveNet", { flipped }, callback)` | Loads the model; callback fires when ready |
+| `bodyPose.detectStart(video, callback)` | Continuous detection |
+| `results[0].nose` | `{x, y, confidence}` — and similarly for all 17 MoveNet keypoints |
+
+---
+
+## Common pitfalls
+
+- **Paw flipping upside-down** — caused by `cos(ang) < 0`. The `drawAng + π` + `scale(-1, 1)` pattern in `drawPaw` fixes this. Do not remove it.
+- **Ears jump when ear keypoints drop out** — `estimateHeadWidth` falls back through eye distance → shoulder distance to keep sizing stable when ears leave the frame.
+- **Head size estimates change with distance** — all measurements are relative to `headW` (itself derived from keypoint spans), so the puppet scales with the user's distance from the camera automatically.

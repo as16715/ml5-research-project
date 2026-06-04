@@ -34,19 +34,21 @@ By the end, this repo serves as a **living micro-project library** that anyone c
 | # | Concept | 🟢 Easy | 🔴 Advanced |
 |---|---------|---------|------------|
 | 1 | Face Mesh | [Easy](./Facemesh/Easy) | [Advanced](./Facemesh/Advanced) |
-| 2 | Image Classification | [Easy](./ImageClassification) | 🔜 Coming Soon |
-| 3 | Pose Estimation | [Easy](./PoseEstimation) | 🔜 Coming Soon |
-| 4 | Object Detection | [Easy](./ObjectDetection) | 🔜 Coming Soon |
+| 2 | Image Classification | [Easy](./ImageClassification/Easy) | [Advanced](./ImageClassification/Advanced) |
+| 3 | Pose Estimation | [Easy](./PoseEstimation/Easy) | [Advanced](./PoseEstimation/Advanced) |
+| 4 | Object Detection | [Easy](./ObjectDetection/Easy) | 🔜 Coming Soon |
 | 5 | Sound Classification | [Easy](./SoundClassification) | 🔜 Coming Soon |
 | 6 | Hand Pose | [Easy](./HandPose/Easy) | [Advanced](./HandPose/Advanced) |
-| 7 | Body Segmentation | [Easy](./BodySegmentation) | 🔜 Coming Soon |
-| 8 | Sentiment Analysis | [Easy](./SentimentAnalysis) | 🔜 Coming Soon |
-| 9 | Neural Network | 🔜 Coming Soon | 🔜 Coming Soon |
-| 10 | Feature Extractor | [Easy](./FeatureExtractor) | 🔜 Coming Soon |
+| 7 | Body Segmentation | [Easy](./BodySegmentation/Easy) | 🔜 Coming Soon |
+| 8 | Sentiment Analysis | [Easy](./SentimentAnalysis/Easy) | 🔜 Coming Soon |
+| 9 | Feature Extractor | [Easy](./FeatureExtractor) | 🔜 Coming Soon |
 
 ---
 
 ## 🚀 How to Use
+
+### Option 0 — Demo the full hub
+Try all projects in one place: https://ml5-research-project.vercel.app/
 
 ### Option 1 — Run Directly in the Browser
 Each project will include a standalone HTML file. Simply download the folder and open `index.html` in your browser. No installation needed.
